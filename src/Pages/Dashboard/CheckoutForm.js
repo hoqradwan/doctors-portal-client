@@ -1,5 +1,5 @@
+import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import React, { useEffect, useState } from 'react';
-import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 const CheckoutForm = ({ appointment }) => {
     const stripe = useStripe();
@@ -11,7 +11,6 @@ const CheckoutForm = ({ appointment }) => {
     const [clientSecret, setClientSecret] = useState('');
 
     const { _id, price, patient, patientName } = appointment;
-
     useEffect(() => {
         fetch('https://floating-beyond-48588.herokuapp.com/create-payment-intent', {
             method: 'POST',
@@ -24,36 +23,38 @@ const CheckoutForm = ({ appointment }) => {
             .then(res => res.json())
             .then(data => {
                 if (data?.clientSecret) {
-                    setClientSecret(data.clientSecret);
+                    setClientSecret(data.clientSecret)
                 }
-            });
+
+            })
 
     }, [price])
 
+
     const handleSubmit = async (event) => {
         event.preventDefault();
-
-        if (!stripe || !elements) {
+        if (!stripe || !clientSecret) {
             return;
         }
 
         const card = elements.getElement(CardElement);
-
-        if (card === null) {
+        if (card == null) {
             return;
         }
 
         const { error, paymentMethod } = await stripe.createPaymentMethod({
             type: 'card',
             card
-        });
+        })
+
 
         setCardError(error?.message || '')
-        setSuccess('');
-        setProcessing(true);
-        // confirm card payment
+        setSuccess('')
+        setProcessing(true)
+
         const { paymentIntent, error: intentError } = await stripe.confirmCardPayment(
             clientSecret,
+
             {
                 payment_method: {
                     card: card,
@@ -62,24 +63,23 @@ const CheckoutForm = ({ appointment }) => {
                         email: patient
                     },
                 },
-            },
-        );
-
+            });
         if (intentError) {
-            setCardError(intentError?.message);
+            setCardError(intentError.message);
             setProcessing(false);
         }
         else {
-            setCardError('');
-            setTransactionId(paymentIntent.id);
+            setCardError('')
+            setTransactionId(paymentIntent.id)
             console.log(paymentIntent);
-            setSuccess('Congrats! Your payment is completed.')
-            
-            //store payment on database
+            setSuccess('your payment is done')
+
             const payment = {
                 appointment: _id,
                 transactionId: paymentIntent.id
             }
+
+
             fetch(`https://floating-beyond-48588.herokuapp.com/booking/${_id}`, {
                 method: 'PATCH',
                 headers: {
@@ -87,34 +87,19 @@ const CheckoutForm = ({ appointment }) => {
                     'authorization': `Bearer ${localStorage.getItem('accessToken')}`
                 },
                 body: JSON.stringify(payment)
-            }).then(res=>res.json())
-            .then(data => {
-                setProcessing(false);
-                console.log(data);
-            })
-
+            }).then(res => res.json())
+                .then(data => {
+                    setProcessing(false)
+                    console.log(data);
+                })
         }
     }
     return (
         <>
             <form onSubmit={handleSubmit}>
-                <CardElement
-                    options={{
-                        style: {
-                            base: {
-                                fontSize: '16px',
-                                color: '#424770',
-                                '::placeholder': {
-                                    color: '#aab7c4',
-                                },
-                            },
-                            invalid: {
-                                color: '#9e2146',
-                            },
-                        },
-                    }}
-                />
-                <button className='btn btn-success btn-sm mt-4' type="submit" disabled={!stripe || !clientSecret || success}>
+                <CardElement />
+                <button className='btn btn-success btn-sm mt-4' type="submit" disabled=
+                    {!stripe || !elements}>
                     Pay
                 </button>
             </form>
@@ -123,8 +108,8 @@ const CheckoutForm = ({ appointment }) => {
             }
             {
                 success && <div className='text-green-500'>
-                    <p>{success}  </p>
-                    <p>Your transaction Id: <span className="text-orange-500 font-bold">{transactionId}</span> </p>
+                    <p>{success}</p>
+                    <p>your transaction id: <span className='text-orange-500 font-bold'>{transactionId}</span></p>
                 </div>
             }
         </>
