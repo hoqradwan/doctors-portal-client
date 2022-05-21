@@ -10,7 +10,7 @@ const stripePromise = loadStripe('pk_test_51L11evCvuGHeMm9SkGgB12DjDkbkZM0vdFqbe
 
 const Payment = () => {
     const { id } = useParams();
-    const url = `https://secret-dusk-46242.herokuapp.combooking/${id}`;
+    const url = `https://floating-beyond-48588.herokuapp.com/booking/${id}`;
 
     const { data: appointment, isLoading } = useQuery(['booking', id], () => fetch(url, {
         method: 'GET',
